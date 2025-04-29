@@ -1,0 +1,2 @@
+INSERT INTO roles (role_id, name) SELECT 1, 'ADMIN' WHERE NOT EXISTS(SELECT role_id FROM roles WHERE role_id = 1);
+INSERT INTO roles (role_id, name) SELECT 2, 'BASIC' WHERE NOT EXISTS(SELECT role_id FROM roles WHERE role_id = 2);
