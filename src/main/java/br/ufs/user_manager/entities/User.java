@@ -22,13 +22,13 @@ public class User {
     private String email;
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     private Status status;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Address> addresses;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -106,7 +106,7 @@ public class User {
     }
 
     public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder){
-        return passwordEncoder.matches(loginRequest.password(), this.password);
+        return passwordEncoder.matches(loginRequest.senha(), this.password);
     }
 
     @Override

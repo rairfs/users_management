@@ -52,7 +52,7 @@ public class UserService {
         Optional<User> user = userRepository.findByEmail(loginRequest.email());
 
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
-            throw new BadCredentialsException("Invalid email or password");
+            throw new BadCredentialsException("Invalid email or senha");
         }
 
         Instant now = Instant.now();
@@ -75,6 +75,7 @@ public class UserService {
         return new LoginResponse(jwtValue, expiresIn);
     }
 
+    @Transactional
     public void register(CreateUserDTO dto) {
         Optional<Role> roleOptional = roleRepository.findByName(RoleType.BASIC.name());
 
@@ -88,6 +89,13 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
+        User user = new User();
+        user.setName(dto.nome());
+        user.setEmail(dto.email());
+        user.setPassword(passwordEncoder.encode(dto.senha()));
+        user.setRoles(Set.of(roleOptional.get()));
+        user.setStatus(Status.ACTIVE);
+
         List<Address> addresses = new ArrayList<>();
 
         for (AddressDTO addressDTO : dto.enderecos()) {
@@ -99,18 +107,15 @@ public class UserService {
             address.setState(addressFound.uf());
             address.setPostalCode(addressFound.cep());
             address.setDistrict(addressFound.bairro());
+            address.setNumber(addressDTO.numero());
             address.setComplement(addressDTO.complemento());
+
+            address.setUser(user);
 
             addresses.add(address);
         }
 
-        User user = new User();
-        user.setName(dto.nome());
-        user.setEmail(dto.email());
-        user.setPassword(passwordEncoder.encode(dto.senha()));
         user.setAddresses(addresses);
-        user.setRoles(Set.of(roleOptional.get()));
-        user.setStatus(Status.ACTIVE);
 
         userRepository.save(user);
     }
