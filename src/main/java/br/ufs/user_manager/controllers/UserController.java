@@ -39,4 +39,16 @@ public class UserController {
         Page<UserDTO> userDTOS = userService.findAll(pageable);
         return ResponseEntity.ok(userDTOS);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getLoggedUser() {
+        UserDTO currentUserInfo = userService.findCurrentUserInfo();
+        return ResponseEntity.ok(currentUserInfo);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        UserDTO userDTO = userService.findById(id);
+        return ResponseEntity.ok(userDTO);
+    }
 }

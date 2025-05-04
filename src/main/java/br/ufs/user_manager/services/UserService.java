@@ -7,13 +7,16 @@ import br.ufs.user_manager.entities.Role;
 import br.ufs.user_manager.entities.User;
 import br.ufs.user_manager.enums.RoleType;
 import br.ufs.user_manager.enums.Status;
+import br.ufs.user_manager.exceptions.EntityNotFoundException;
 import br.ufs.user_manager.repositories.RoleRepository;
 import br.ufs.user_manager.repositories.UserRepository;
+import br.ufs.user_manager.utils.CurrentUserUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -142,5 +145,39 @@ public class UserService {
                 )).toList()
         )).toList();
         return new PageImpl<>(userDTOS, pageable, userDTOS.size());
+    }
+
+    public UserDTO findCurrentUserInfo() {
+        Long userID = CurrentUserUtils.getCurrentUserID();
+        return getUserDTO(userID);
+    }
+
+    public UserDTO findById(Long id) {
+        if (!CurrentUserUtils.isCurrentUserAdmin() && !CurrentUserUtils.getCurrentUserID().equals(id)) {
+            throw new AccessDeniedException("Access denied");
+        }
+        return getUserDTO(id);
+    }
+
+    private UserDTO getUserDTO(Long id) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            throw new EntityNotFoundException("User not found");
+        }
+        return new UserDTO(
+                user.get().getName(),
+                user.get().getEmail(),
+                user.get().getCreatedAt(),
+                user.get().getUpdatedAt(),
+                user.get().getAddresses().stream().map(a -> new AddressResponseDTO(
+                        a.getStreetName(),
+                        a.getNumber(),
+                        a.getComplement(),
+                        a.getDistrict(),
+                        a.getCity(),
+                        a.getState(),
+                        a.getPostalCode()
+                )).toList()
+        );
     }
 }
