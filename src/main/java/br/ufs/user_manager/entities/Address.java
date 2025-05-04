@@ -1,7 +1,10 @@
 package br.ufs.user_manager.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -24,13 +27,23 @@ public class Address {
     private String state;
     private String postalCode;
 
+    @Column(name = "created_at")
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime updatedAt;
+
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;
 
     public Address() {}
 
-    public Address(Long addressId, String streetName, String number, String complement, String district, String city, String state, String postalCode, User user) {
+    public Address(Long addressId, String streetName, String number, String complement, String district, String city, String state, String postalCode, LocalDateTime createdAt, LocalDateTime updatedAt, User user) {
         this.addressId = addressId;
         this.streetName = streetName;
         this.number = number;
@@ -39,6 +52,8 @@ public class Address {
         this.city = city;
         this.state = state;
         this.postalCode = postalCode;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.user = user;
     }
 
@@ -104,6 +119,22 @@ public class Address {
 
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public User getUser() {

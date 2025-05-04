@@ -3,8 +3,8 @@ package br.ufs.user_manager.dtos;
 import java.util.List;
 
 public record CreateUserDTO(
-        String nome,
+        String name,
         String email,
-        String senha,
-        List<AddressDTO> enderecos
+        String password,
+        List<AddressCreationDTO> addresses
 ) {}

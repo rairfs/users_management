@@ -3,8 +3,11 @@ package br.ufs.user_manager.entities;
 import br.ufs.user_manager.dtos.LoginRequest;
 import br.ufs.user_manager.enums.Status;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -25,8 +28,18 @@ public class User {
     @Enumerated(EnumType.ORDINAL)
     private Status status;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Address> addresses;
+
+    @Column(name = "created_at")
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    private LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -39,13 +52,15 @@ public class User {
     public User() {
     }
 
-    public User(Long userId, String name, String email, String password, Status status, List<Address> addresses, Set<Role> roles) {
+    public User(Long userId, String name, String email, String password, Status status, List<Address> addresses, LocalDateTime createdAt, LocalDateTime updatedAt, Set<Role> roles) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.password = password;
         this.status = status;
         this.addresses = addresses;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.roles = roles;
     }
 
@@ -89,6 +104,22 @@ public class User {
         this.status = status;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public List<Address> getAddresses() {
         return addresses;
     }
@@ -106,7 +137,7 @@ public class User {
     }
 
     public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder){
-        return passwordEncoder.matches(loginRequest.senha(), this.password);
+        return passwordEncoder.matches(loginRequest.password(), this.password);
     }
 
     @Override

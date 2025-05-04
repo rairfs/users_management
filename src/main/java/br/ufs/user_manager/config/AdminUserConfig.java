@@ -4,6 +4,7 @@ import br.ufs.user_manager.entities.Address;
 import br.ufs.user_manager.entities.Role;
 import br.ufs.user_manager.entities.User;
 import br.ufs.user_manager.enums.RoleType;
+import br.ufs.user_manager.enums.Status;
 import br.ufs.user_manager.repositories.RoleRepository;
 import br.ufs.user_manager.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Configuration
 public class AdminUserConfig implements CommandLineRunner {
@@ -54,6 +56,7 @@ public class AdminUserConfig implements CommandLineRunner {
                     user.setEmail(adminEmail);
                     user.setName("Admin");
                     user.setPassword(bCryptPasswordEncoder.encode(adminPassword));
+                    user.setStatus(Status.ACTIVE);
 
                     Address address = new Address();
                     address.setUser(user);
@@ -68,6 +71,7 @@ public class AdminUserConfig implements CommandLineRunner {
                     List<Address> addresses = List.of(address);
 
                     user.setAddresses(addresses);
+                    user.setRoles(Set.of(roleOptional.get()));
 
                     userRepository.save(user);
                 }

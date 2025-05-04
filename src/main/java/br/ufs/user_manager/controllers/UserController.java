@@ -3,12 +3,13 @@ package br.ufs.user_manager.controllers;
 import br.ufs.user_manager.dtos.CreateUserDTO;
 import br.ufs.user_manager.dtos.LoginRequest;
 import br.ufs.user_manager.dtos.LoginResponse;
+import br.ufs.user_manager.dtos.UserDTO;
 import br.ufs.user_manager.services.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/user")
@@ -30,5 +31,12 @@ public class UserController {
     public ResponseEntity<Void> register(@RequestBody CreateUserDTO dto) {
         userService.register(dto);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<Page<UserDTO>> getUsers(Pageable pageable) {
+        Page<UserDTO> userDTOS = userService.findAll(pageable);
+        return ResponseEntity.ok(userDTOS);
     }
 }

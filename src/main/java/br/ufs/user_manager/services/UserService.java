@@ -10,6 +10,9 @@ import br.ufs.user_manager.enums.Status;
 import br.ufs.user_manager.repositories.RoleRepository;
 import br.ufs.user_manager.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -52,7 +55,7 @@ public class UserService {
         Optional<User> user = userRepository.findByEmail(loginRequest.email());
 
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
-            throw new BadCredentialsException("Invalid email or senha");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         Instant now = Instant.now();
@@ -90,16 +93,16 @@ public class UserService {
         }
 
         User user = new User();
-        user.setName(dto.nome());
+        user.setName(dto.name());
         user.setEmail(dto.email());
-        user.setPassword(passwordEncoder.encode(dto.senha()));
+        user.setPassword(passwordEncoder.encode(dto.password()));
         user.setRoles(Set.of(roleOptional.get()));
         user.setStatus(Status.ACTIVE);
 
         List<Address> addresses = new ArrayList<>();
 
-        for (AddressDTO addressDTO : dto.enderecos()) {
-            CepResponse addressFound = viaCepClient.getCep(addressDTO.cep());
+        for (AddressCreationDTO addressCreationDTO : dto.addresses()) {
+            CepResponse addressFound = viaCepClient.getCep(addressCreationDTO.postalCode());
 
             Address address = new Address();
             address.setStreetName(addressFound.logradouro());
@@ -107,8 +110,8 @@ public class UserService {
             address.setState(addressFound.uf());
             address.setPostalCode(addressFound.cep());
             address.setDistrict(addressFound.bairro());
-            address.setNumber(addressDTO.numero());
-            address.setComplement(addressDTO.complemento());
+            address.setNumber(addressCreationDTO.number());
+            address.setComplement(addressCreationDTO.complement());
 
             address.setUser(user);
 
@@ -118,5 +121,26 @@ public class UserService {
         user.setAddresses(addresses);
 
         userRepository.save(user);
+    }
+
+    public Page<UserDTO> findAll(Pageable pageable) {
+        Page<User> pagedUser = userRepository.findAllByStatus(Status.ACTIVE, pageable);
+
+        List<UserDTO> userDTOS = pagedUser.stream().map(p -> new UserDTO(
+                p.getName(),
+                p.getEmail(),
+                p.getCreatedAt(),
+                p.getUpdatedAt(),
+                p.getAddresses().stream().map(a -> new AddressResponseDTO(
+                        a.getStreetName(),
+                        a.getNumber(),
+                        a.getComplement(),
+                        a.getDistrict(),
+                        a.getCity(),
+                        a.getState(),
+                        a.getPostalCode()
+                )).toList()
+        )).toList();
+        return new PageImpl<>(userDTOS, pageable, userDTOS.size());
     }
 }
