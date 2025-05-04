@@ -35,8 +35,12 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<Page<UserDTO>> getUsers(Pageable pageable) {
-        Page<UserDTO> userDTOS = userService.findAll(pageable);
+    public ResponseEntity<Page<UserDTO>> getUsers(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email,
+            Pageable pageable
+    ) {
+        Page<UserDTO> userDTOS = userService.findAll(name, email, pageable);
         return ResponseEntity.ok(userDTOS);
     }
 

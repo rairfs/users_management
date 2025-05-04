@@ -10,11 +10,13 @@ import br.ufs.user_manager.enums.Status;
 import br.ufs.user_manager.exceptions.EntityNotFoundException;
 import br.ufs.user_manager.repositories.RoleRepository;
 import br.ufs.user_manager.repositories.UserRepository;
+import br.ufs.user_manager.specifications.UserSpecification;
 import br.ufs.user_manager.utils.CurrentUserUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -126,8 +128,9 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public Page<UserDTO> findAll(Pageable pageable) {
-        Page<User> pagedUser = userRepository.findAllByStatus(Status.ACTIVE, pageable);
+    public Page<UserDTO> findAll(String name, String email, Pageable pageable) {
+        Specification<User> spec = UserSpecification.filter(name, email);
+        Page<User> pagedUser = userRepository.findAllByStatus(Status.ACTIVE, spec, pageable);
 
         List<UserDTO> userDTOS = pagedUser.stream().map(p -> new UserDTO(
                 p.getName(),
