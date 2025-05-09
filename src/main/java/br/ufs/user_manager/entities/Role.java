@@ -18,6 +18,10 @@ public class Role {
     public Role() {
     }
 
+    public Role(String name) {
+        this.name = name;
+    }
+
     public Role(Long roleId, String name) {
         this.roleId = roleId;
         this.name = name;
@@ -44,18 +48,18 @@ public class Role {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Role role = (Role) o;
-        return Objects.equals(roleId, role.roleId);
+        return Objects.equals(name, role.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(roleId);
+        return Objects.hashCode(name);
     }
 
     @Override
     public String toString() {
         return "Role{" +
-               "roleId=" + roleId +
+               "name='" + name + '\'' +
                '}';
     }
 }

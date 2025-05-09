@@ -86,11 +86,7 @@ public class UserService {
 
     @Transactional
     public void register(CreateUserDTO dto) {
-        Optional<Role> roleOptional = roleRepository.findByName(RoleType.BASIC.name());
-
-        if (roleOptional.isEmpty()) {
-            throw new RuntimeException("Role not found");
-        }
+        Role role = getRole(RoleType.BASIC);
 
         Optional<User> userOptional = userRepository.findByEmailAndStatus(dto.email(), Status.ACTIVE);
 
@@ -102,7 +98,7 @@ public class UserService {
         user.setName(dto.name());
         user.setEmail(dto.email());
         user.setPassword(passwordEncoder.encode(dto.password()));
-        user.setRoles(Set.of(roleOptional.get()));
+        user.setRoles(Set.of(role));
         user.setStatus(Status.ACTIVE);
 
         List<Address> addresses = new ArrayList<>();
@@ -153,9 +149,7 @@ public class UserService {
 
     @Transactional
     public UserDTO update(UpdateUserDTO dto, Long id) {
-        if (!CurrentUserUtils.isCurrentUserAdmin() && !CurrentUserUtils.getCurrentUserID().equals(id)) {
-            throw new AccessDeniedException("Access denied");
-        }
+        validateAccess(id);
 
         User userFound = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
         if (dto.name() != null)
@@ -198,6 +192,66 @@ public class UserService {
 
     }
 
+    @Transactional
+    public void deleteById(Long id) {
+        validateAccess(id);
+
+        User userFound = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        userFound.setStatus(Status.INACTIVE);
+        userRepository.save(userFound);
+    }
+
+    @Transactional
+    public void addAdminRole(String email) {
+
+        Role adminRole = getRole(RoleType.ADMIN);
+
+        Optional<User> userOptional = userRepository.findByEmailAndStatus(email, Status.ACTIVE);
+
+        if (userOptional.isEmpty()) throw new EntityNotFoundException("User not found");
+        if (userOptional.get().getRoles().contains(adminRole)) {
+            throw new EntityAlreadyExistsException("User already has admin role");
+        }
+
+        User user = userOptional.get();
+        Set<Role> currentRoles = user.getRoles();
+        currentRoles.add(adminRole);
+        user.setRoles(currentRoles);
+        userRepository.save(user);
+
+    }
+
+    @Transactional
+    public void removeAdminRole(String email) {
+        Role adminRole = getRole(RoleType.ADMIN);
+
+        Optional<User> userOptional = userRepository.findByEmailAndStatus(email, Status.ACTIVE);
+
+        if (userOptional.isEmpty()) throw new EntityNotFoundException("User not found");
+        if (!userOptional.get().getRoles().contains(adminRole)) {
+            throw new EntityNotFoundException("User does not have admin role");
+        }
+
+        User user = userOptional.get();
+        Set<Role> currentRoles = user.getRoles();
+        currentRoles.remove(adminRole);
+        user.setRoles(currentRoles);
+    }
+
+    private Role getRole(RoleType roleType) {
+        Optional<Role> roleOptional = roleRepository.findByName(roleType.toString());
+        if (roleOptional.isEmpty()) throw new EntityNotFoundException("Role not found");
+        return roleOptional.get();
+    }
+
+    private void validateAccess(Long id) {
+        boolean isAdmin = CurrentUserUtils.isCurrentUserAdmin();
+        boolean isSelf = CurrentUserUtils.getCurrentUserID().equals(id);
+        if (!isAdmin && !isSelf) {
+            throw new AccessDeniedException("Access denied");
+        }
+    }
+
     private Address getAddressFromService(AddressCreationDTO addressCreationDTO, User user) {
         CepResponse cepResponse = viaCepClient.getCep(addressCreationDTO.postalCode());
         Address address = new Address();
@@ -233,4 +287,6 @@ public class UserService {
                 )).toList()
         );
     }
+
+
 }

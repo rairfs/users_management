@@ -59,4 +59,24 @@ public class UserController {
         UserDTO updated = userService.update(userDTO, id);
         return ResponseEntity.ok(updated);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/admin/{email}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<Void> addAdminAccess(@PathVariable String email) {
+        userService.addAdminRole(email);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/noadmin/{email}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<Void> removeAdminAccess(@PathVariable String email) {
+        userService.removeAdminRole(email);
+        return ResponseEntity.noContent().build();
+    }
 }
