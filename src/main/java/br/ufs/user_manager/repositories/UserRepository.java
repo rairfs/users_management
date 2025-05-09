@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByEmailAndStatus(String email, Status status);
+
     default Page<User> findAllByStatus(Status status, Specification<User> spec, Pageable pageable) {
         Specification<User> finalSpec = Specification.where(spec);
 

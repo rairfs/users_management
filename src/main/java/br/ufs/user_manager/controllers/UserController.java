@@ -1,10 +1,8 @@
 package br.ufs.user_manager.controllers;
 
-import br.ufs.user_manager.dtos.CreateUserDTO;
-import br.ufs.user_manager.dtos.LoginRequest;
-import br.ufs.user_manager.dtos.LoginResponse;
-import br.ufs.user_manager.dtos.UserDTO;
+import br.ufs.user_manager.dtos.*;
 import br.ufs.user_manager.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -54,5 +52,11 @@ public class UserController {
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         UserDTO userDTO = userService.findById(id);
         return ResponseEntity.ok(userDTO);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDTO> updateUser(@RequestBody UpdateUserDTO userDTO, @PathVariable Long id) {
+        UserDTO updated = userService.update(userDTO, id);
+        return ResponseEntity.ok(updated);
     }
 }

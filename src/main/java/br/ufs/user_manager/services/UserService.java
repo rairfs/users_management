@@ -7,6 +7,7 @@ import br.ufs.user_manager.entities.Role;
 import br.ufs.user_manager.entities.User;
 import br.ufs.user_manager.enums.RoleType;
 import br.ufs.user_manager.enums.Status;
+import br.ufs.user_manager.exceptions.EntityAlreadyExistsException;
 import br.ufs.user_manager.exceptions.EntityNotFoundException;
 import br.ufs.user_manager.repositories.RoleRepository;
 import br.ufs.user_manager.repositories.UserRepository;
@@ -91,10 +92,10 @@ public class UserService {
             throw new RuntimeException("Role not found");
         }
 
-        Optional<User> userOptional = userRepository.findByEmail(dto.email());
+        Optional<User> userOptional = userRepository.findByEmailAndStatus(dto.email(), Status.ACTIVE);
 
         if (userOptional.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);
+            throw new EntityAlreadyExistsException("User already exists");
         }
 
         User user = new User();
@@ -107,19 +108,7 @@ public class UserService {
         List<Address> addresses = new ArrayList<>();
 
         for (AddressCreationDTO addressCreationDTO : dto.addresses()) {
-            CepResponse addressFound = viaCepClient.getCep(addressCreationDTO.postalCode());
-
-            Address address = new Address();
-            address.setStreetName(addressFound.logradouro());
-            address.setCity(addressFound.localidade());
-            address.setState(addressFound.uf());
-            address.setPostalCode(addressFound.cep());
-            address.setDistrict(addressFound.bairro());
-            address.setNumber(addressCreationDTO.number());
-            address.setComplement(addressCreationDTO.complement());
-
-            address.setUser(user);
-
+            Address address = getAddressFromService(addressCreationDTO, user);
             addresses.add(address);
         }
 
@@ -160,6 +149,67 @@ public class UserService {
             throw new AccessDeniedException("Access denied");
         }
         return getUserDTO(id);
+    }
+
+    @Transactional
+    public UserDTO update(UpdateUserDTO dto, Long id) {
+        if (!CurrentUserUtils.isCurrentUserAdmin() && !CurrentUserUtils.getCurrentUserID().equals(id)) {
+            throw new AccessDeniedException("Access denied");
+        }
+
+        User userFound = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if (dto.name() != null)
+            if (!dto.name().trim().isEmpty()) userFound.setName(dto.name());
+
+        if (dto.email() != null)
+            if (!dto.email().trim().isEmpty()) userFound.setEmail(dto.email());
+
+        if (dto.password() != null)
+            if (!dto.password().trim().isEmpty()) userFound.setPassword(passwordEncoder.encode(dto.password()));
+
+
+        if (dto.addresses() != null && !dto.addresses().isEmpty()) {
+            List<Address> addressUpdate = new ArrayList<>();
+            for (AddressCreationDTO addressCreationDTO : dto.addresses()) {
+                Address address = getAddressFromService(addressCreationDTO, userFound);
+                addressUpdate.add(address);
+            }
+            userFound.setAddresses(addressUpdate);
+        }
+
+        User saved = userRepository.save(userFound);
+
+        return new UserDTO(
+                saved.getName(),
+                saved.getEmail(),
+                saved.getCreatedAt(),
+                saved.getUpdatedAt(),
+                saved.getAddresses().stream().map(address -> new AddressResponseDTO(
+                        address.getStreetName(),
+                        address.getNumber(),
+                        address.getComplement(),
+                        address.getDistrict(),
+                        address.getCity(),
+                        address.getState(),
+                        address.getPostalCode()
+                )).toList()
+        );
+
+
+    }
+
+    private Address getAddressFromService(AddressCreationDTO addressCreationDTO, User user) {
+        CepResponse cepResponse = viaCepClient.getCep(addressCreationDTO.postalCode());
+        Address address = new Address();
+        address.setStreetName(cepResponse.logradouro());
+        address.setCity(cepResponse.localidade());
+        address.setState(cepResponse.uf());
+        address.setPostalCode(cepResponse.cep());
+        address.setDistrict(cepResponse.bairro());
+        address.setComplement(addressCreationDTO.complement());
+        address.setNumber(addressCreationDTO.number());
+        address.setUser(user);
+        return address;
     }
 
     private UserDTO getUserDTO(Long id) {

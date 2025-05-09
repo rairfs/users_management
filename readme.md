@@ -10,6 +10,8 @@ This project is built for managing users of a system. There are some functionali
 - Java 21;
 - Spring Boot 3;
 - Spring Security;
+- JUnit 5;
+- Mockito;
 - Postgresql.
 
 ### Installation
@@ -23,5 +25,5 @@ This project is built for managing users of a system. There are some functionali
 - Then, run the project using your IDE or the following command: ``./mvnw spring-boot:run``
 
 ### Author
-Raí Rafael Santos Silva
+Raí Rafael Santos Silva <br>
 Email: rairafaelss@gmail.com
