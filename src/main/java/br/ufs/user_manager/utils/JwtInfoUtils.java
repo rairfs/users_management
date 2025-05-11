@@ -24,7 +24,12 @@ public class JwtInfoUtils {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (principal instanceof Jwt jwt) {
-            return Optional.ofNullable(jwt.getClaimAsString(claimName));
+            Map<String, Object> claims = jwt.getClaims();
+
+            String claim = String.valueOf(claims.get("scope"));
+            if (claim.contains(claimName)) {
+                return Optional.of(claim);
+            }
         }
         return Optional.empty();
     }

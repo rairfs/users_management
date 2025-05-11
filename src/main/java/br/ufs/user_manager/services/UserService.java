@@ -118,6 +118,7 @@ public class UserService {
         Page<User> pagedUser = userRepository.findAllByStatus(Status.ACTIVE, spec, pageable);
 
         List<UserDTO> userDTOS = pagedUser.stream().map(p -> new UserDTO(
+                p.getUserId(),
                 p.getName(),
                 p.getEmail(),
                 p.getCreatedAt(),
@@ -141,9 +142,8 @@ public class UserService {
     }
 
     public UserDTO findById(Long id) {
-        if (!CurrentUserUtils.isCurrentUserAdmin() && !CurrentUserUtils.getCurrentUserID().equals(id)) {
-            throw new AccessDeniedException("Access denied");
-        }
+        validateAccess(id);
+
         return getUserDTO(id);
     }
 
@@ -174,6 +174,7 @@ public class UserService {
         User saved = userRepository.save(userFound);
 
         return new UserDTO(
+                saved.getUserId(),
                 saved.getName(),
                 saved.getEmail(),
                 saved.getCreatedAt(),
@@ -247,7 +248,7 @@ public class UserService {
     private void validateAccess(Long id) {
         boolean isAdmin = CurrentUserUtils.isCurrentUserAdmin();
         boolean isSelf = CurrentUserUtils.getCurrentUserID().equals(id);
-        if (!isAdmin && !isSelf) {
+        if (!(isAdmin || isSelf)) {
             throw new AccessDeniedException("Access denied");
         }
     }
@@ -272,6 +273,7 @@ public class UserService {
             throw new EntityNotFoundException("User not found");
         }
         return new UserDTO(
+                user.get().getUserId(),
                 user.get().getName(),
                 user.get().getEmail(),
                 user.get().getCreatedAt(),

@@ -22,7 +22,7 @@ public class CurrentUserUtils {
     }
 
     public static Boolean isCurrentUserAdmin() {
-        Optional<String> claim = JwtInfoUtils.getClaim("SCOPE_ADMIN");
+        Optional<String> claim = JwtInfoUtils.getClaim("ADMIN");
 
         return claim.isPresent();
     }
